@@ -4,11 +4,13 @@ import {
   getDuracubePrinciples,
   getLearnedCorrections,
   getOutputFormat,
+  getFinanceExtractionGuide,
   toolDefinitions,
 } from './tools/knowledge-tools.js';
 import {
   GetPrinciplesSchema,
   GetLearnedCorrectionsSchema,
+  GetFinanceExtractionGuideSchema,
 } from './schemas/tool-schemas.js';
 
 const app = express();
@@ -57,7 +59,7 @@ app.get('/health', (req: Request, res: Response) => {
     server: 'duracube-contract-mcp',
     version: '1.0.0',
     protocol: '2025-03-26',
-    tools: ['get_duracube_principles', 'get_learned_corrections', 'get_output_format'],
+    tools: ['get_duracube_principles', 'get_learned_corrections', 'get_output_format', 'get_finance_extraction_guide'],
     activeSessions: sessions.size,
   });
 });
@@ -69,6 +71,7 @@ app.get('/tools', (req: Request, res: Response) => {
       toolDefinitions.get_duracube_principles,
       toolDefinitions.get_learned_corrections,
       toolDefinitions.get_output_format,
+      toolDefinitions.get_finance_extraction_guide,
     ],
   });
 });
@@ -151,6 +154,7 @@ function handleMcpRequest(req: Request, res: Response, sessionId: string | null)
           toolDefinitions.get_duracube_principles,
           toolDefinitions.get_learned_corrections,
           toolDefinitions.get_output_format,
+          toolDefinitions.get_finance_extraction_guide,
         ],
       },
     });
@@ -178,6 +182,12 @@ function handleMcpRequest(req: Request, res: Response, sessionId: string | null)
 
         case 'get_output_format': {
           result = getOutputFormat();
+          break;
+        }
+
+        case 'get_finance_extraction_guide': {
+          const validatedArgs = GetFinanceExtractionGuideSchema.parse(args || {});
+          result = getFinanceExtractionGuide(validatedArgs);
           break;
         }
 
@@ -313,6 +323,17 @@ app.post('/tools/get_learned_corrections', (req: Request, res: Response) => {
 app.get('/tools/get_output_format', (req: Request, res: Response) => {
   try {
     const result = getOutputFormat();
+    res.json(JSON.parse(result));
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+app.post('/tools/get_finance_extraction_guide', (req: Request, res: Response) => {
+  try {
+    const validatedArgs = GetFinanceExtractionGuideSchema.parse(req.body || {});
+    const result = getFinanceExtractionGuide(validatedArgs);
     res.json(JSON.parse(result));
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
