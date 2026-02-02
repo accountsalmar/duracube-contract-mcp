@@ -5,12 +5,14 @@ import {
   getLearnedCorrections,
   getOutputFormat,
   getFinanceExtractionGuide,
+  getSectionPrincipleMapping,
   toolDefinitions,
 } from './tools/knowledge-tools.js';
 import {
   GetPrinciplesSchema,
   GetLearnedCorrectionsSchema,
   GetFinanceExtractionGuideSchema,
+  GetSectionPrincipleMappingSchema,
 } from './schemas/tool-schemas.js';
 
 const app = express();
@@ -57,9 +59,9 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({
     status: 'healthy',
     server: 'duracube-contract-mcp',
-    version: '1.0.0',
+    version: '1.1.0',
     protocol: '2025-03-26',
-    tools: ['get_duracube_principles', 'get_learned_corrections', 'get_output_format', 'get_finance_extraction_guide'],
+    tools: ['get_duracube_principles', 'get_learned_corrections', 'get_output_format', 'get_finance_extraction_guide', 'get_section_principle_mapping'],
     activeSessions: sessions.size,
   });
 });
@@ -72,6 +74,7 @@ app.get('/tools', (req: Request, res: Response) => {
       toolDefinitions.get_learned_corrections,
       toolDefinitions.get_output_format,
       toolDefinitions.get_finance_extraction_guide,
+      toolDefinitions.get_section_principle_mapping,
     ],
   });
 });
@@ -155,6 +158,7 @@ function handleMcpRequest(req: Request, res: Response, sessionId: string | null)
           toolDefinitions.get_learned_corrections,
           toolDefinitions.get_output_format,
           toolDefinitions.get_finance_extraction_guide,
+          toolDefinitions.get_section_principle_mapping,
         ],
       },
     });
@@ -188,6 +192,12 @@ function handleMcpRequest(req: Request, res: Response, sessionId: string | null)
         case 'get_finance_extraction_guide': {
           const validatedArgs = GetFinanceExtractionGuideSchema.parse(args || {});
           result = getFinanceExtractionGuide(validatedArgs);
+          break;
+        }
+
+        case 'get_section_principle_mapping': {
+          const validatedArgs = GetSectionPrincipleMappingSchema.parse(args || {});
+          result = getSectionPrincipleMapping(validatedArgs);
           break;
         }
 
@@ -334,6 +344,17 @@ app.post('/tools/get_finance_extraction_guide', (req: Request, res: Response) =>
   try {
     const validatedArgs = GetFinanceExtractionGuideSchema.parse(req.body || {});
     const result = getFinanceExtractionGuide(validatedArgs);
+    res.json(JSON.parse(result));
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+app.post('/tools/get_section_principle_mapping', (req: Request, res: Response) => {
+  try {
+    const validatedArgs = GetSectionPrincipleMappingSchema.parse(req.body || {});
+    const result = getSectionPrincipleMapping(validatedArgs);
     res.json(JSON.parse(result));
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

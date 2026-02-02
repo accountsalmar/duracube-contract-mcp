@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import type { GetPrinciplesInput, GetLearnedCorrectionsInput, GetFinanceExtractionGuideInput } from '../schemas/tool-schemas.js';
+import type { GetPrinciplesInput, GetLearnedCorrectionsInput, GetFinanceExtractionGuideInput, GetSectionPrincipleMappingInput } from '../schemas/tool-schemas.js';
 
 // Get the directory of the current module
 const __filename = fileURLToPath(import.meta.url);
@@ -12,6 +12,7 @@ const principlesPath = join(__dirname, '..', 'knowledge', 'principles.json');
 const learningsPath = join(__dirname, '..', 'knowledge', 'learnings.json');
 const formatPath = join(__dirname, '..', 'knowledge', 'format.json');
 const financeExtractionPath = join(__dirname, '..', 'knowledge', 'finance-extraction.json');
+const sectionMappingPath = join(__dirname, '..', 'knowledge', 'section-mapping.json');
 
 interface PrinciplesData {
   principles: Array<{
@@ -125,10 +126,64 @@ interface FinanceExtractionData {
   };
 }
 
+interface SectionMappingData {
+  metadata: {
+    version: string;
+    purpose: string;
+    created: string;
+    usage: string;
+  };
+  large_contract_guidance: {
+    when_to_use: string;
+    strategy: string;
+    workflow: string[];
+    token_estimates: {
+      per_page_average_tokens: number;
+      claude_context_limit: number;
+      safe_chunk_size_pages: number;
+      recommended_chunk_size_pages: number;
+    };
+  };
+  section_groups: Array<{
+    group_id: string;
+    group_name: string;
+    typical_sections: string[];
+    page_range_hint: string;
+    principles_to_check: number[];
+    principle_details: Array<{
+      id: number;
+      name: string;
+      search_for: string;
+    }>;
+    critical_alerts?: string[];
+    analysis_prompt: string;
+  }>;
+  quick_reference: {
+    non_negotiable_principles: {
+      ids: number[];
+      groups_containing: string[];
+      note: string;
+    };
+    negotiable_principles: {
+      ids: number[];
+      groups_containing: string[];
+      note: string;
+    };
+    principle_to_group_map: Record<string, string>;
+  };
+  combining_results_template: {
+    instruction: string;
+    format: string;
+    ordering: string[];
+    final_prompt: string;
+  };
+}
+
 let principlesData: PrinciplesData;
 let learningsData: LearningsData;
 let formatData: FormatData;
 let financeExtractionData: FinanceExtractionData;
+let sectionMappingData: SectionMappingData;
 
 // Load data lazily to avoid issues during module initialization
 function loadData() {
@@ -143,6 +198,9 @@ function loadData() {
   }
   if (!financeExtractionData) {
     financeExtractionData = JSON.parse(readFileSync(financeExtractionPath, 'utf-8'));
+  }
+  if (!sectionMappingData) {
+    sectionMappingData = JSON.parse(readFileSync(sectionMappingPath, 'utf-8'));
   }
 }
 
@@ -431,6 +489,91 @@ export function getFinanceExtractionGuide(input: GetFinanceExtractionGuideInput)
   return JSON.stringify(response, null, 2);
 }
 
+/**
+ * Get section-to-principle mapping for analyzing large contracts in chunks.
+ * Use this when contracts exceed token limits - analyze sections in groups.
+ */
+export function getSectionPrincipleMapping(input: GetSectionPrincipleMappingInput): string {
+  loadData();
+
+  const { group_id, include_prompts } = input;
+
+  // Filter section groups if specific group requested
+  const filteredGroups = group_id === 'all'
+    ? sectionMappingData.section_groups
+    : sectionMappingData.section_groups.filter(g => g.group_id === group_id);
+
+  // Build response
+  const response: {
+    purpose: string;
+    when_to_use: string;
+    workflow: string[];
+    token_guidance: typeof sectionMappingData.large_contract_guidance.token_estimates;
+    total_groups: number;
+    filter_applied: string;
+    section_groups: Array<{
+      group_id: string;
+      group_name: string;
+      typical_sections: string[];
+      page_range_hint: string;
+      principles_to_check: number[];
+      principle_details: Array<{
+        id: number;
+        name: string;
+        search_for: string;
+      }>;
+      critical_alerts?: string[];
+      analysis_prompt?: string;
+    }>;
+    quick_reference: typeof sectionMappingData.quick_reference;
+    combining_results: typeof sectionMappingData.combining_results_template;
+  } = {
+    purpose: sectionMappingData.metadata.purpose,
+    when_to_use: sectionMappingData.large_contract_guidance.when_to_use,
+    workflow: sectionMappingData.large_contract_guidance.workflow,
+    token_guidance: sectionMappingData.large_contract_guidance.token_estimates,
+    total_groups: filteredGroups.length,
+    filter_applied: group_id,
+    section_groups: filteredGroups.map(g => {
+      const group: {
+        group_id: string;
+        group_name: string;
+        typical_sections: string[];
+        page_range_hint: string;
+        principles_to_check: number[];
+        principle_details: Array<{
+          id: number;
+          name: string;
+          search_for: string;
+        }>;
+        critical_alerts?: string[];
+        analysis_prompt?: string;
+      } = {
+        group_id: g.group_id,
+        group_name: g.group_name,
+        typical_sections: g.typical_sections,
+        page_range_hint: g.page_range_hint,
+        principles_to_check: g.principles_to_check,
+        principle_details: g.principle_details,
+      };
+
+      if (g.critical_alerts) {
+        group.critical_alerts = g.critical_alerts;
+      }
+
+      if (include_prompts) {
+        group.analysis_prompt = g.analysis_prompt;
+      }
+
+      return group;
+    }),
+    quick_reference: sectionMappingData.quick_reference,
+    combining_results: sectionMappingData.combining_results_template,
+  };
+
+  return JSON.stringify(response, null, 2);
+}
+
 // Export tool definitions for MCP registration
 export const toolDefinitions = {
   get_duracube_principles: {
@@ -557,6 +700,53 @@ Use this tool when performing FINANCE REVIEW (separate from commercial 28-princi
           enum: ['all', 'contract_value', 'parties', 'payment', 'retention', 'documentation', 'submission', 'project_manager', 'dollar_values'],
           default: 'all',
           description: 'Filter to specific extraction category',
+        },
+      },
+    },
+  },
+  get_section_principle_mapping: {
+    name: 'get_section_principle_mapping',
+    description: `Get section-to-principle mapping for analyzing LARGE contracts that exceed token limits.
+
+PURPOSE: When a contract is too large to analyze in one pass, this tool provides:
+- 7 logical section groups (A through G) that map to specific principles
+- Ready-to-use analysis prompts for each section
+- Guidance on combining results into final departure schedule
+
+SECTION GROUPS:
+- Group A: General & Administrative (Principles 1-6)
+- Group B: Payment & Security (Principles 14, 15, 16, 24) - contains critical non-negotiables
+- Group C: Liability & Indemnity (Principles 7-11)
+- Group D: Insurance (Principle 25) - PI Insurance = NON-COMPLIANT
+- Group E: Disputes & Legal (Principles 13, 19)
+- Group F: Variations, Extensions & Claims (Principles 17, 18, 20-23)
+- Group G: Design, Defects & Completion (Principles 12, 26-28)
+
+WORKFLOW:
+1. Use this tool to get section-principle mapping
+2. Ask user to identify page ranges for each section group
+3. Analyze each section group with its mapped principles
+4. Combine all results using the provided template
+
+Use this tool when:
+- Contract exceeds ~150 pages
+- You receive token limit errors
+- Contract structure is complex with many schedules
+
+This enables systematic analysis of contracts of ANY size.`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        group_id: {
+          type: 'string',
+          enum: ['all', 'A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          default: 'all',
+          description: 'Filter to specific section group (A=General, B=Payment/Security, C=Liability, D=Insurance, E=Disputes, F=Variations, G=Design/Completion)',
+        },
+        include_prompts: {
+          type: 'boolean',
+          default: true,
+          description: 'Include ready-to-use analysis prompts for each section group',
         },
       },
     },

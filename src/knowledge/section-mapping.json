@@ -1,0 +1,652 @@
+{
+  "metadata": {
+    "version": "1.2.0",
+    "purpose": "Maps contract sections to relevant DuraCube principles for efficient large contract analysis",
+    "created": "2026-02-01",
+    "updated": "2026-02-02",
+    "usage": "Use when contracts exceed token limits - analyze sections in groups against mapped principles",
+    "changelog": [
+      "1.0.0 - Initial section-based chunking",
+      "1.1.0 - Added Google Drive workflow and search-first extraction strategy",
+      "1.2.0 - CRITICAL FIX: Aligned all principle IDs with canonical principles.json"
+    ]
+  },
+  "large_contract_guidance": {
+    "when_to_use": "When contract exceeds approximately 150 pages or causes token limit errors",
+    "strategy": "Section-based chunking - analyze contract in logical groups of sections",
+    "workflow": [
+      "Step 1: Extract contract structure (sections, schedules, page numbers)",
+      "Step 2: Analyze each section group against its mapped principles",
+      "Step 3: Combine results into single departure schedule"
+    ],
+    "token_estimates": {
+      "per_page_average_tokens": 500,
+      "claude_context_limit": 200000,
+      "safe_chunk_size_pages": 100,
+      "recommended_chunk_size_pages": 50
+    }
+  },
+  "google_drive_workflow": {
+    "description": "Optimized workflow when sharing Google Drive PDF links with Claude.ai",
+    "why_better": "Claude's sandbox can access the PDF on-demand, extracting only needed pages instead of loading entire document into context",
+    "benefits": [
+      "Lower token consumption - only extracts pages as needed",
+      "Handles larger contracts than direct upload",
+      "Sandbox performs text extraction separately from context window",
+      "Enables search-first approach for efficient analysis"
+    ],
+    "setup_instructions": [
+      "1. Upload contract PDF to Google Drive",
+      "2. Set sharing to 'Anyone with the link can view'",
+      "3. Copy the shareable link",
+      "4. Paste link in Claude.ai chat",
+      "5. Use search-first extraction prompts below"
+    ],
+    "best_practices": [
+      "Use search-first approach to identify relevant pages before deep analysis",
+      "Request specific page ranges rather than entire document",
+      "Let Claude's sandbox handle PDF text extraction",
+      "Combine with section-group mapping for systematic coverage"
+    ]
+  },
+  "smart_extraction": {
+    "strategy": "search_first",
+    "description": "Search for principle-related terms first, then extract and analyze only relevant pages",
+    "workflow": [
+      "Phase 1: Discovery - Search document for all principle keywords, get page numbers",
+      "Phase 2: Targeted Extraction - Extract only pages containing relevant terms",
+      "Phase 3: Analysis - Analyze extracted content against specific principles",
+      "Phase 4: Combine - Merge all findings into departure schedule"
+    ],
+    "discovery_prompt": "Search this contract PDF for the following terms and list which pages contain each term. Do not extract full content yet, just identify page numbers:\n\n**Critical Terms (Non-Negotiable Principles):**\n- 'bank guarantee', 'unconditional guarantee', 'security', 'PCG' → Principle 15\n- 'parent company guarantee' → Principle 15\n- 'professional indemnity', 'PI insurance' → Principle 25\n- 'design liability', 'fit for purpose', 'shop drawings' → Principle 28\n- 'head contract', 'principal contract', 'back-to-back' → Principle 3\n- 'dispute resolution', 'arbitration', 'mediation' → Principle 13\n- 'proportionate liability', 'Civil Liability Act' → Principle 19\n- 'payment terms', 'progress claim', 'pay when paid', '14 days' → Principle 14\n- 'release of security', 'return of guarantee' → Principle 16\n- 'set off', 'withhold', 'deduct' → Principle 24\n\n**Other Important Terms:**\n- 'insurance', 'public liability' → Principle 25\n- 'indemnity', 'hold harmless' → Principle 18\n- 'limitation of liability', 'liability cap' → Principle 1\n- 'consequential loss', 'indirect loss' → Principle 2\n- 'time bar', 'notification period' → Principle 8\n- 'defects liability', 'DLP', '52 weeks' → Principle 17\n- 'extension of time', 'EOT' → Principle 5\n- 'liquidated damages', 'LDs' → Principle 4\n- 'termination' → Principles 11, 12\n- 'variation', 'change order' → Principle 7\n\nFormat your response as:\nTerm: [term] → Found on pages: [X, Y, Z] → Principle: [N]",
+    "targeted_extraction_prompt": "Based on the search results, extract the full text from pages [LIST PAGES] of the contract. These pages contain terms relevant to principles [LIST PRINCIPLES]. After extraction, analyze each principle providing: Status (Compliant/Non-Compliant/No Term), Page and Clause reference, Departure required if any.",
+    "critical_terms_quick_scan": {
+      "description": "Priority search terms that indicate potential NON-COMPLIANT findings",
+      "must_search_first": [
+        {
+          "term": "unconditional",
+          "context": "bank guarantee",
+          "principle": 15,
+          "if_found": "Likely NON-COMPLIANT - DuraCube only provides dated guarantees"
+        },
+        {
+          "term": "parent company guarantee",
+          "context": "security requirements",
+          "principle": 15,
+          "if_found": "NON-COMPLIANT - DuraCube never provides PCGs"
+        },
+        {
+          "term": "professional indemnity",
+          "context": "insurance requirements",
+          "principle": 25,
+          "if_found": "NON-COMPLIANT - DuraCube does not hold PI insurance"
+        },
+        {
+          "term": "fit for purpose",
+          "context": "design obligations",
+          "principle": 28,
+          "if_found": "Likely NON-COMPLIANT - exceeds DuraCube's design scope"
+        }
+      ]
+    }
+  },
+  "principle_search_terms": {
+    "description": "Comprehensive search terms for each principle, aligned with canonical principles.json",
+    "usage": "Use these terms with Claude's sandbox to locate relevant contract sections",
+    "principles": {
+      "1": {
+        "name": "Limitation of Liability",
+        "primary_terms": ["limitation of liability", "liability cap", "maximum liability"],
+        "secondary_terms": ["aggregate liability", "total liability", "liability ceiling"],
+        "section_hints": ["Liability", "Limitation", "Cap"]
+      },
+      "2": {
+        "name": "Consequential Damages",
+        "primary_terms": ["consequential damages", "consequential loss", "indirect damages"],
+        "secondary_terms": ["special damages", "incidental damages", "lost profits"],
+        "section_hints": ["Consequential Loss", "Exclusion of Liability", "Damages"]
+      },
+      "3": {
+        "name": "Head Contract Provision",
+        "primary_terms": ["head contract", "main contract", "principal contract"],
+        "secondary_terms": ["back-to-back", "flow-down", "pass-through"],
+        "section_hints": ["General Conditions", "Relationship to Head Contract"],
+        "is_non_negotiable": true
+      },
+      "4": {
+        "name": "Liquidated Damages",
+        "primary_terms": ["liquidated damages", "LDs", "delay damages"],
+        "secondary_terms": ["predetermined damages", "agreed damages", "daily rate"],
+        "section_hints": ["Liquidated Damages", "Delay", "Damages"]
+      },
+      "5": {
+        "name": "Extension of Time",
+        "primary_terms": ["extension of time", "EOT", "time relief"],
+        "secondary_terms": ["delay relief", "qualifying delay", "excusable delay"],
+        "section_hints": ["Extensions of Time", "Delay", "Time"]
+      },
+      "6": {
+        "name": "Force Majeure",
+        "primary_terms": ["force majeure", "act of God", "unforeseeable circumstances"],
+        "secondary_terms": ["extraordinary events", "impossibility", "frustration"],
+        "section_hints": ["Force Majeure", "Relief Events"]
+      },
+      "7": {
+        "name": "Variations: Accelerations, Omissions",
+        "primary_terms": ["variations", "change orders", "scope changes"],
+        "secondary_terms": ["modifications", "alterations", "additional work"],
+        "section_hints": ["Variations", "Changes", "Scope"]
+      },
+      "8": {
+        "name": "Time Bars/Notification Period",
+        "primary_terms": ["time bar", "notification period", "notice requirement"],
+        "secondary_terms": ["condition precedent", "claim notification", "written notice"],
+        "section_hints": ["Claims", "Notices", "Time Limits"]
+      },
+      "9": {
+        "name": "Assessment Period",
+        "primary_terms": ["assessment period", "review period", "evaluation period"],
+        "secondary_terms": ["determination period", "response time", "claim assessment"],
+        "section_hints": ["Claims", "Assessment", "Review"]
+      },
+      "10": {
+        "name": "Service for Notices",
+        "primary_terms": ["service of notices", "notice delivery", "communication method"],
+        "secondary_terms": ["deemed service", "notice provisions", "delivery method"],
+        "section_hints": ["Notices", "Communications", "Service"]
+      },
+      "11": {
+        "name": "Termination",
+        "primary_terms": ["termination", "termination rights", "contract termination"],
+        "secondary_terms": ["end of contract", "cessation", "contract end"],
+        "section_hints": ["Termination", "Default", "Ending the Contract"]
+      },
+      "12": {
+        "name": "Termination for Convenience",
+        "primary_terms": ["termination for convenience", "convenience termination", "at-will termination"],
+        "secondary_terms": ["termination without cause", "voluntary termination", "discretionary termination"],
+        "section_hints": ["Termination", "Convenience", "Wind-down"]
+      },
+      "13": {
+        "name": "Dispute Resolution",
+        "primary_terms": ["dispute resolution", "dispute procedure", "conflict resolution"],
+        "secondary_terms": ["escalation procedure", "dispute mechanism", "resolution process"],
+        "section_hints": ["Disputes", "Dispute Resolution", "Mediation"],
+        "is_non_negotiable": true
+      },
+      "14": {
+        "name": "Payment and Cash Neutrality",
+        "primary_terms": ["payment terms", "payment period", "invoice payment"],
+        "secondary_terms": ["payment due date", "credit terms", "payment schedule"],
+        "section_hints": ["Payment", "Progress Claims", "Invoicing"],
+        "is_non_negotiable": true
+      },
+      "15": {
+        "name": "Security & Parent Company Guarantees",
+        "primary_terms": ["bank guarantee", "security", "parent company guarantee", "unconditional guarantee"],
+        "secondary_terms": ["PCG", "performance security", "retention", "bond"],
+        "section_hints": ["Security", "Bank Guarantee", "Performance Security"],
+        "is_non_negotiable": true,
+        "critical_red_flags": ["unconditional", "parent company guarantee", "PCG", "on demand"]
+      },
+      "16": {
+        "name": "Release of Security",
+        "primary_terms": ["release of security", "return of guarantee", "security release"],
+        "secondary_terms": ["return of security", "release of bank guarantee", "retention release"],
+        "section_hints": ["Security", "Release", "Retention"],
+        "is_non_negotiable": true
+      },
+      "17": {
+        "name": "Defects Liability Period",
+        "primary_terms": ["defects liability period", "DLP", "defects period", "52 weeks"],
+        "secondary_terms": ["maintenance period", "rectification period", "12 months"],
+        "section_hints": ["Defects", "DLP", "Rectification"]
+      },
+      "18": {
+        "name": "Indemnities",
+        "primary_terms": ["indemnity", "indemnification", "hold harmless"],
+        "secondary_terms": ["indemnify and defend", "harmless provision", "protection clause"],
+        "section_hints": ["Indemnity", "Liability", "Risk"]
+      },
+      "19": {
+        "name": "Proportionate Liability Act",
+        "primary_terms": ["proportionate liability", "proportionate liability act", "apportionment"],
+        "secondary_terms": ["concurrent wrongdoers", "contributory fault", "apportioned liability"],
+        "section_hints": ["Liability", "Proportionate Liability", "Apportionment"],
+        "is_non_negotiable": true
+      },
+      "20": {
+        "name": "Risk & Title Transfer",
+        "primary_terms": ["risk transfer", "title transfer", "passing of risk"],
+        "secondary_terms": ["transfer of ownership", "retention of title", "risk and title"],
+        "section_hints": ["Risk", "Title", "Ownership"]
+      },
+      "21": {
+        "name": "Unfixed Materials",
+        "primary_terms": ["unfixed materials", "materials on site", "uninstalled materials"],
+        "secondary_terms": ["stored materials", "delivered materials", "goods on site"],
+        "section_hints": ["Materials", "Payment", "Site Storage"]
+      },
+      "22": {
+        "name": "Intellectual Property",
+        "primary_terms": ["intellectual property", "IP", "background IP"],
+        "secondary_terms": ["project IP", "foreground IP", "developed IP"],
+        "section_hints": ["Intellectual Property", "IP", "Copyright"]
+      },
+      "23": {
+        "name": "Urgent Protection",
+        "primary_terms": ["urgent protection", "emergency work", "urgent works"],
+        "secondary_terms": ["immediate protection", "emergency measures", "protective work"],
+        "section_hints": ["Emergency", "Urgent Works", "Protection"]
+      },
+      "24": {
+        "name": "Set Off",
+        "primary_terms": ["set off", "set-off", "setoff"],
+        "secondary_terms": ["deduction", "withholding", "offset"],
+        "section_hints": ["Payment", "Set Off", "Deductions"],
+        "is_non_negotiable": true
+      },
+      "25": {
+        "name": "Insurances",
+        "primary_terms": ["insurance", "insurances", "policy", "professional indemnity"],
+        "secondary_terms": ["PI insurance", "public liability", "contract works insurance"],
+        "section_hints": ["Insurance", "Risk", "Policies"],
+        "is_non_negotiable": true,
+        "critical_red_flags": ["professional indemnity", "PI insurance", "PI cover"]
+      },
+      "26": {
+        "name": "Protection of Works",
+        "primary_terms": ["protection of works", "works protection", "care of works"],
+        "secondary_terms": ["temporary protection", "maintaining works", "safeguarding works"],
+        "section_hints": ["Protection", "Care of Works", "Maintenance"]
+      },
+      "27": {
+        "name": "Time is of the Essence / Escalation",
+        "primary_terms": ["time is of the essence", "time of essence", "escalation"],
+        "secondary_terms": ["fundamental term", "essential term", "price adjustment"],
+        "section_hints": ["Time", "Essence", "Escalation"]
+      },
+      "28": {
+        "name": "Design Liability",
+        "primary_terms": ["design liability", "design responsibility", "fit for purpose"],
+        "secondary_terms": ["design risk", "design duties", "shop drawings"],
+        "section_hints": ["Design", "Design Liability", "Specifications"],
+        "is_non_negotiable": true,
+        "critical_red_flags": ["fit for purpose", "fitness for purpose", "design and construct"]
+      }
+    }
+  },
+  "section_groups": [
+    {
+      "group_id": "A",
+      "group_name": "General & Administrative Terms",
+      "typical_sections": [
+        "General Conditions",
+        "Definitions",
+        "Interpretation",
+        "Contract Documents",
+        "Notices",
+        "Assignment",
+        "Subcontracting"
+      ],
+      "page_range_hint": "Usually pages 1-30",
+      "principles_to_check": [3, 10, 11],
+      "principle_details": [
+        {
+          "id": 3,
+          "name": "Head Contract Provision",
+          "category": "NON-NEGOTIABLE",
+          "search_for": "Head contract, principal contract, back-to-back, flow-down"
+        },
+        {
+          "id": 10,
+          "name": "Service for Notices",
+          "category": "Negotiable",
+          "search_for": "Service of notices, email notice, delivery method, deemed service"
+        },
+        {
+          "id": 11,
+          "name": "Termination",
+          "category": "Negotiable",
+          "search_for": "Termination, termination rights, reciprocal rights"
+        }
+      ],
+      "critical_alerts": [
+        "Head contract flow-down provisions = NON-COMPLIANT",
+        "Blanket incorporation of head contract terms = NON-COMPLIANT"
+      ],
+      "sandbox_search_prompt": "Search this contract PDF for these terms and report page numbers found:\n- 'head contract', 'principal contract', 'back-to-back', 'flow-down'\n- 'service of notices', 'notice delivery', 'email notice'\n- 'termination', 'termination rights', 'reciprocal'",
+      "analysis_prompt": "Analyze pages [X-Y] of this contract against DuraCube principles 3, 10, and 11:\n- Principle 3: Head Contract Provision (NON-NEGOTIABLE)\n- Principle 10: Service for Notices\n- Principle 11: Termination\n\nFor each principle, provide: Status (Compliant/Non-Compliant/No Term), Page reference with clause number, any departures required."
+    },
+    {
+      "group_id": "B",
+      "group_name": "Payment & Security Terms",
+      "typical_sections": [
+        "Payment",
+        "Progress Claims",
+        "Security",
+        "Bank Guarantees",
+        "Retention",
+        "Set Off"
+      ],
+      "page_range_hint": "Usually pages 30-60",
+      "principles_to_check": [14, 15, 16, 24],
+      "principle_details": [
+        {
+          "id": 14,
+          "name": "Payment and Cash Neutrality",
+          "category": "NON-NEGOTIABLE",
+          "search_for": "Payment terms, progress claims, 14 days EOM, pay when paid"
+        },
+        {
+          "id": 15,
+          "name": "Security & Parent Company Guarantees",
+          "category": "NON-NEGOTIABLE",
+          "search_for": "Bank guarantee, security, parent company guarantee, unconditional, PCG"
+        },
+        {
+          "id": 16,
+          "name": "Release of Security",
+          "category": "NON-NEGOTIABLE",
+          "search_for": "Security release, guarantee return, retention release, 52 weeks"
+        },
+        {
+          "id": 24,
+          "name": "Set Off",
+          "category": "NON-NEGOTIABLE",
+          "search_for": "Set off, withhold, deduct, offset"
+        }
+      ],
+      "critical_alerts": [
+        "UNCONDITIONAL bank guarantees = NON-COMPLIANT (DuraCube only provides dated guarantees)",
+        "Parent Company Guarantees = NON-COMPLIANT (DuraCube never provides these)",
+        "Cash retention = NON-COMPLIANT",
+        "Pay when paid = NON-COMPLIANT",
+        "No security requirements = COMPLIANT (favorable to DuraCube)"
+      ],
+      "sandbox_search_prompt": "Search this contract PDF for these CRITICAL terms and report page numbers found:\n- 'unconditional' (near 'guarantee' or 'security') - RED FLAG\n- 'parent company guarantee', 'PCG' - RED FLAG\n- 'bank guarantee', 'performance security'\n- 'retention', 'security deposit'\n- 'set off', 'set-off', 'withhold', 'deduct'\n- 'payment claim', 'progress claim', '14 days'\n- 'pay when paid', 'pay if paid'",
+      "analysis_prompt": "Analyze pages [X-Y] of this contract against DuraCube principles 14, 15, 16, and 24 (ALL NON-NEGOTIABLE):\n- Principle 14: Payment and Cash Neutrality\n- Principle 15: Security & Parent Company Guarantees\n- Principle 16: Release of Security\n- Principle 24: Set Off\n\nCRITICAL ALERTS:\n- Unconditional bank guarantees = NON-COMPLIANT\n- Parent Company Guarantees = NON-COMPLIANT\n- Cash retention = NON-COMPLIANT\n\nFor each principle, provide: Status, Page reference with clause number, any departures required."
+    },
+    {
+      "group_id": "C",
+      "group_name": "Liability & Indemnity Terms",
+      "typical_sections": [
+        "Liability",
+        "Indemnity",
+        "Limitation of Liability",
+        "Exclusion of Liability",
+        "Consequential Loss",
+        "Proportionate Liability"
+      ],
+      "page_range_hint": "Usually pages 60-90",
+      "principles_to_check": [1, 2, 18, 19],
+      "principle_details": [
+        {
+          "id": 1,
+          "name": "Limitation of Liability",
+          "category": "Negotiable",
+          "search_for": "Limitation of liability, liability cap, maximum liability, 100% contract value"
+        },
+        {
+          "id": 2,
+          "name": "Consequential Damages",
+          "category": "Negotiable",
+          "search_for": "Consequential damages, consequential loss, indirect loss, special damages"
+        },
+        {
+          "id": 18,
+          "name": "Indemnities",
+          "category": "Negotiable",
+          "search_for": "Indemnity, indemnification, hold harmless, reciprocal indemnity"
+        },
+        {
+          "id": 19,
+          "name": "Proportionate Liability Act",
+          "category": "NON-NEGOTIABLE",
+          "search_for": "Proportionate liability, Civil Liability Act, concurrent wrongdoers, apportionment"
+        }
+      ],
+      "critical_alerts": [
+        "Exclusion of Proportionate Liability Act = NON-COMPLIANT",
+        "Unlimited liability = HIGH RISK",
+        "One-sided indemnities without proportional reduction = HIGH RISK"
+      ],
+      "sandbox_search_prompt": "Search this contract PDF for these terms and report page numbers found:\n- 'limitation of liability', 'liability cap', 'maximum liability'\n- 'consequential loss', 'consequential damages', 'indirect loss'\n- 'indemnity', 'indemnifies', 'hold harmless'\n- 'proportionate liability', 'Civil Liability Act', 'apportionment'",
+      "analysis_prompt": "Analyze pages [X-Y] of this contract against DuraCube principles 1, 2, 18, and 19:\n- Principle 1: Limitation of Liability (cap should be <= 100% of contract value)\n- Principle 2: Consequential Damages (should be mutually excluded)\n- Principle 18: Indemnities (should be reciprocal or proportionally reduced)\n- Principle 19: Proportionate Liability Act (NON-NEGOTIABLE - must NOT be excluded)\n\nFor each principle, provide: Status (Compliant/Non-Compliant/No Term), Page reference with clause number, any departures required."
+    },
+    {
+      "group_id": "D",
+      "group_name": "Insurance Terms",
+      "typical_sections": [
+        "Insurance",
+        "Contract Works Insurance",
+        "Public Liability",
+        "Professional Indemnity",
+        "Workers Compensation"
+      ],
+      "page_range_hint": "Usually pages 90-110",
+      "principles_to_check": [25],
+      "principle_details": [
+        {
+          "id": 25,
+          "name": "Insurances",
+          "category": "NON-NEGOTIABLE",
+          "search_for": "Insurance, policy, PI insurance, professional indemnity, public liability"
+        }
+      ],
+      "critical_alerts": [
+        "Professional Indemnity Insurance requirement = NON-COMPLIANT (DuraCube does NOT hold PI insurance)",
+        "Public liability over $20M = Review required",
+        "Contract works over $400k project value = Review required",
+        "No insurance requirements beyond standard = COMPLIANT (favorable)"
+      ],
+      "sandbox_search_prompt": "Search this contract PDF for these CRITICAL terms and report page numbers found:\n- 'professional indemnity' - RED FLAG - DuraCube has NO PI insurance\n- 'PI insurance', 'PI cover' - RED FLAG\n- 'insurance schedule'\n- 'public liability', '$20M', '$20 million'\n- 'contract works insurance'\n- 'workers compensation'",
+      "analysis_prompt": "Analyze pages [X-Y] of this contract against DuraCube principle 25 (Insurances - NON-NEGOTIABLE).\n\nCRITICAL: Any requirement for Professional Indemnity (PI) Insurance is NON-COMPLIANT - DuraCube does not hold PI insurance.\n\nDuraCube's insurance limits:\n- Public Liability: $20M\n- Contract Works: $400k project value\n- Professional Indemnity: NOT PROVIDED\n\nProvide: Status, Page reference with clause number, any departures required."
+    },
+    {
+      "group_id": "E",
+      "group_name": "Disputes & Termination Terms",
+      "typical_sections": [
+        "Dispute Resolution",
+        "Governing Law",
+        "Jurisdiction",
+        "Mediation",
+        "Arbitration",
+        "Termination for Convenience"
+      ],
+      "page_range_hint": "Usually pages 110-130",
+      "principles_to_check": [12, 13],
+      "principle_details": [
+        {
+          "id": 12,
+          "name": "Termination for Convenience",
+          "category": "Negotiable",
+          "search_for": "Termination for convenience, at-will termination, demobilisation, wind-down costs"
+        },
+        {
+          "id": 13,
+          "name": "Dispute Resolution",
+          "category": "NON-NEGOTIABLE",
+          "search_for": "Dispute resolution, disputes, mediation, arbitration, senior negotiation"
+        }
+      ],
+      "critical_alerts": [
+        "No senior executive negotiation step before formal proceedings = NON-COMPLIANT",
+        "Incomplete cost recovery on convenience termination = HIGH RISK (must include overheads, materials, demob)"
+      ],
+      "sandbox_search_prompt": "Search this contract PDF for these terms and report page numbers found:\n- 'dispute resolution', 'disputes'\n- 'mediation', 'arbitration', 'adjudication'\n- 'senior representatives', 'senior negotiation'\n- 'termination for convenience', 'at-will termination'\n- 'demobilisation', 'demobilization', 'wind-down'",
+      "analysis_prompt": "Analyze pages [X-Y] of this contract against DuraCube principles 12 and 13:\n- Principle 12: Termination for Convenience (must include full cost recovery: overheads, materials, demob, and security release)\n- Principle 13: Dispute Resolution (NON-NEGOTIABLE - must require senior executive negotiation before formal proceedings)\n\nFor each principle, provide: Status (Compliant/Non-Compliant/No Term), Page reference with clause number, any departures required."
+    },
+    {
+      "group_id": "F",
+      "group_name": "Variations, Time & Claims Terms",
+      "typical_sections": [
+        "Variations",
+        "Extensions of Time",
+        "Delay",
+        "Claims",
+        "Liquidated Damages",
+        "Force Majeure",
+        "Time Bars"
+      ],
+      "page_range_hint": "Usually pages 130-170",
+      "principles_to_check": [4, 5, 6, 7, 8, 9],
+      "principle_details": [
+        {
+          "id": 4,
+          "name": "Liquidated Damages",
+          "category": "Negotiable",
+          "search_for": "Liquidated damages, LDs, delay damages, sole remedy, 10% cap"
+        },
+        {
+          "id": 5,
+          "name": "Extension of Time",
+          "category": "Negotiable",
+          "search_for": "Extension of time, EOT, delay relief, pandemic, supply chain"
+        },
+        {
+          "id": 6,
+          "name": "Force Majeure",
+          "category": "Negotiable",
+          "search_for": "Force majeure, act of God, extraordinary events, time and cost relief"
+        },
+        {
+          "id": 7,
+          "name": "Variations: Accelerations, Omissions",
+          "category": "Negotiable",
+          "search_for": "Variations, change orders, scope changes, written direction, acceleration"
+        },
+        {
+          "id": 8,
+          "name": "Time Bars/Notification Period",
+          "category": "Negotiable",
+          "search_for": "Time bar, notification period, 5 business days, notice requirement"
+        },
+        {
+          "id": 9,
+          "name": "Assessment Period",
+          "category": "Negotiable",
+          "search_for": "Assessment period, 10 business days, review period, deemed approval"
+        }
+      ],
+      "critical_alerts": [
+        "LDs over 10% of contract value = HIGH RISK",
+        "LDs not stated as sole remedy for delay = HIGH RISK",
+        "Time bars under 5 business days = NON-COMPLIANT",
+        "No pandemic/supply chain EOT provisions = HIGH RISK",
+        "Force majeure without cost recovery = HIGH RISK"
+      ],
+      "sandbox_search_prompt": "Search this contract PDF for these terms and report page numbers found:\n- 'liquidated damages', 'LDs', 'delay damages', '10%'\n- 'extension of time', 'EOT', 'delay relief'\n- 'force majeure', 'pandemic', 'COVID'\n- 'variation', 'variations', 'change order'\n- 'time bar', 'notification period', 'business days'\n- 'assessment period', 'deemed approval'",
+      "analysis_prompt": "Analyze pages [X-Y] of this contract against DuraCube principles 4, 5, 6, 7, 8, and 9 (ALL NEGOTIABLE):\n- Principle 4: Liquidated Damages (max 10% of contract value, must be sole remedy for delay)\n- Principle 5: Extension of Time (must include time AND cost relief for pandemic, supply chain, etc.)\n- Principle 6: Force Majeure (must include time AND cost relief)\n- Principle 7: Variations (must require written direction, full cost recovery)\n- Principle 8: Time Bars (minimum 5 business days notification period)\n- Principle 9: Assessment Period (maximum 10 business days)\n\nFor each principle, provide: Status (Compliant/Non-Compliant/No Term), Page reference with clause number, any departures required."
+    },
+    {
+      "group_id": "G",
+      "group_name": "Design, Defects & Completion Terms",
+      "typical_sections": [
+        "Design Obligations",
+        "Specifications",
+        "Practical Completion",
+        "Defects Liability Period",
+        "Intellectual Property",
+        "Risk and Title",
+        "Protection of Works"
+      ],
+      "page_range_hint": "Usually pages 170-200+",
+      "principles_to_check": [17, 20, 21, 22, 23, 26, 27, 28],
+      "principle_details": [
+        {
+          "id": 17,
+          "name": "Defects Liability Period",
+          "category": "Negotiable",
+          "search_for": "Defects liability period, DLP, 52 weeks, 12 months, no re-warranty"
+        },
+        {
+          "id": 20,
+          "name": "Risk & Title Transfer",
+          "category": "Negotiable",
+          "search_for": "Risk transfer, title transfer, passing of risk, delivery and acceptance"
+        },
+        {
+          "id": 21,
+          "name": "Unfixed Materials",
+          "category": "Negotiable",
+          "search_for": "Unfixed materials, materials on site, stored materials, installation impediment"
+        },
+        {
+          "id": 22,
+          "name": "Intellectual Property",
+          "category": "Negotiable",
+          "search_for": "Intellectual property, IP, background IP, project IP, copyright"
+        },
+        {
+          "id": 23,
+          "name": "Urgent Protection",
+          "category": "Negotiable",
+          "search_for": "Urgent protection, emergency work, protective work, cost recovery"
+        },
+        {
+          "id": 26,
+          "name": "Protection of Works",
+          "category": "Negotiable",
+          "search_for": "Protection of works, care of works, post-completion protection"
+        },
+        {
+          "id": 27,
+          "name": "Time is of the Essence / Escalation",
+          "category": "Negotiable",
+          "search_for": "Time is of the essence, escalation, price adjustment"
+        },
+        {
+          "id": 28,
+          "name": "Design Liability",
+          "category": "NON-NEGOTIABLE",
+          "search_for": "Design liability, design responsibility, fit for purpose, shop drawings"
+        }
+      ],
+      "critical_alerts": [
+        "DLP over 52 weeks/12 months = HIGH RISK",
+        "Re-warranty on rectification work = NON-COMPLIANT",
+        "'Fit for purpose' design obligations = NON-COMPLIANT",
+        "Design liability beyond shop drawings = NON-COMPLIANT",
+        "Post-completion protection obligations = HIGH RISK",
+        "Transfer of background IP = NON-COMPLIANT"
+      ],
+      "sandbox_search_prompt": "Search this contract PDF for these CRITICAL terms and report page numbers found:\n- 'fit for purpose', 'fitness for purpose' - RED FLAG\n- 'design liability', 'design obligations', 'design responsibility'\n- 'shop drawings', 'fabrication drawings'\n- 'defects liability period', 'DLP', '52 weeks', '12 months'\n- 'intellectual property', 'IP', 'background IP'\n- 'risk transfer', 'title transfer'\n- 'protection of works', 'care of works'\n- 'time is of the essence'",
+      "analysis_prompt": "Analyze pages [X-Y] of this contract against DuraCube principles 17, 20, 21, 22, 23, 26, 27, and 28:\n- Principle 17: Defects Liability Period (max 52 weeks/12 months, no re-warranty)\n- Principle 20: Risk & Title Transfer (risk on accepted delivery, title on payment)\n- Principle 21: Unfixed Materials (payment for materials when installation impeded)\n- Principle 22: Intellectual Property (background IP retained, project IP on payment)\n- Principle 23: Urgent Protection (case-by-case with cost recovery)\n- Principle 26: Protection of Works (no post-completion obligations)\n- Principle 27: Time is of the Essence (should be excluded)\n- Principle 28: Design Liability (NON-NEGOTIABLE - limited to shop drawings only, NO fit for purpose)\n\nFor each principle, provide: Status (Compliant/Non-Compliant/No Term), Page reference with clause number, any departures required."
+    }
+  ],
+  "quick_reference": {
+    "non_negotiable_principles": {
+      "ids": [3, 13, 14, 15, 16, 19, 24, 25, 28],
+      "groups_containing": ["A", "B", "C", "D", "E", "G"],
+      "note": "These principles appear in Section 1 of departure schedule - cannot be compromised"
+    },
+    "negotiable_principles": {
+      "ids": [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 18, 20, 21, 22, 23, 26, 27],
+      "groups_containing": ["A", "C", "E", "F", "G"],
+      "note": "These principles appear in Section 2 of departure schedule - can be negotiated"
+    },
+    "principle_to_group_map": {
+      "1": "C", "2": "C", "3": "A", "4": "F", "5": "F", "6": "F",
+      "7": "F", "8": "F", "9": "F", "10": "A", "11": "A", "12": "E",
+      "13": "E", "14": "B", "15": "B", "16": "B", "17": "G", "18": "C",
+      "19": "C", "20": "G", "21": "G", "22": "G", "23": "G", "24": "B",
+      "25": "D", "26": "G", "27": "G", "28": "G"
+    },
+    "critical_red_flag_terms": [
+      {"term": "unconditional", "principle": 15, "alert": "Bank guarantee must be dated, not unconditional"},
+      {"term": "parent company guarantee", "principle": 15, "alert": "DuraCube never provides PCGs"},
+      {"term": "professional indemnity", "principle": 25, "alert": "DuraCube has no PI insurance"},
+      {"term": "fit for purpose", "principle": 28, "alert": "Exceeds DuraCube design scope"}
+    ]
+  },
+  "combining_results_template": {
+    "instruction": "After analyzing all section groups, combine results into a single departure schedule",
+    "format": "Use get_output_format tool for exact CSV specification",
+    "ordering": [
+      "Section 1 - NON-NEGOTIABLE: Principles 3, 13, 14, 15, 16, 19, 24, 25, 28 (in this order)",
+      "Section 2 - NEGOTIABLE: Principles 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 18, 20, 21, 22, 23, 26, 27 (in this order)"
+    ],
+    "final_prompt": "Combine all the analysis results from the section groups into a complete departure schedule. Use the exact CSV format from get_output_format. Order principles correctly in Section 1 (Non-Negotiable: 3, 13, 14, 15, 16, 19, 24, 25, 28) and Section 2 (Negotiable: 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 18, 20, 21, 22, 23, 26, 27)."
+  }
+}

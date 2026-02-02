@@ -50,3 +50,21 @@ export const GetFinanceExtractionGuideSchema = z.object({
 });
 
 export type GetFinanceExtractionGuideInput = z.infer<typeof GetFinanceExtractionGuideSchema>;
+
+/**
+ * Schema for get_section_principle_mapping tool
+ */
+export const GetSectionPrincipleMappingSchema = z.object({
+  group_id: z
+    .enum(['all', 'A', 'B', 'C', 'D', 'E', 'F', 'G'])
+    .optional()
+    .default('all')
+    .describe('Filter to specific section group (A=General, B=Payment/Security, C=Liability, D=Insurance, E=Disputes, F=Variations, G=Design/Completion)'),
+  include_prompts: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('Include ready-to-use analysis prompts for each section group'),
+});
+
+export type GetSectionPrincipleMappingInput = z.infer<typeof GetSectionPrincipleMappingSchema>;
