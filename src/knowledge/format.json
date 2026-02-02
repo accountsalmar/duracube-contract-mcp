@@ -1,4 +1,16 @@
 {
+  "_output_requirement": {
+    "IMPORTANT": "OUTPUT MUST BE AN EXCEL FILE (.xlsx) - NOT CSV OR PLAIN TEXT",
+    "file_format": ".xlsx (Excel workbook with formatting)",
+    "creation_method": "Use Python with openpyxl or xlsxwriter library",
+    "must_include": [
+      "Conditional formatting on Status column (green/red/yellow)",
+      "Merged header row with project details",
+      "Two sections (Non-Negotiable and Negotiable)",
+      "Proper column widths and text wrapping",
+      "Thin borders around all cells"
+    ]
+  },
   "excel_structure": {
     "worksheet_name": "Departure Schedule",
     "row_1": {
@@ -203,8 +215,11 @@
     }
   },
   "output_instructions": {
-    "format": "markdown_table_two_sections",
-    "description": "Output as a markdown table with two sections that can be easily copied to Excel",
+    "PRIMARY_OUTPUT": "EXCEL FILE (.xlsx) with conditional formatting",
+    "format": "excel_workbook_with_formatting",
+    "description": "Create an Excel file (.xlsx) using Python with openpyxl. Apply conditional formatting, merged cells, and proper column widths.",
+    "fallback_format": "markdown_table_two_sections (only if Excel creation not possible)",
+    "fallback_description": "If Excel creation is not possible, output as a markdown table that can be copied to Excel",
     "structure": [
       "## Departure Schedule: [CustomerName]_[ProjectName]_$[ContractValue]",
       "",

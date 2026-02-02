@@ -679,14 +679,24 @@ Use this tool to avoid repeating known errors and handle edge cases correctly.`,
   },
   get_output_format: {
     name: 'get_output_format',
-    description: `Get exact CSV format specification for departure schedules.
+    description: `Get exact EXCEL format specification for departure schedules.
+
+⚠️ IMPORTANT: Output must be an EXCEL FILE (.xlsx) with conditional formatting - NOT CSV or plain text.
 
 This tool provides:
-- CSV structure with row formats
-- Column specifications with validation rules
-- Multiple example rows showing correct formatting
+- Excel workbook structure with two sections (Non-Negotiable, Negotiable)
+- Conditional formatting rules (green=Compliant, red=Non-Compliant, yellow=No Term)
+- Column specifications with widths and validation rules
+- Complete example with proper formatting
 - Quality checklist for output validation
-- Complete CSV example for reference
+
+EXCEL CREATION REQUIREMENTS:
+- Use Python with openpyxl or xlsxwriter library
+- Apply conditional formatting to Status column (Column C)
+- Merge header row (A1:G1) with project details
+- Set column widths: A=5, B=30, C=15, D=20, E=50, F=50, G=20
+- Enable text wrap for Clause and Departure columns
+- Add thin borders around all cells
 
 CRITICAL RULES:
 - Page references MUST include clause numbers: "Page 5, Clause 8.1"
@@ -694,7 +704,7 @@ CRITICAL RULES:
 - Departures use action verbs: Insert: | Replace: | Amend: | Delete:
 - Comments column always empty
 
-Use this tool BEFORE generating the final departure schedule to ensure correct format.`,
+Use this tool BEFORE generating the final departure schedule to ensure correct Excel format.`,
     inputSchema: {
       type: 'object',
       properties: {},
