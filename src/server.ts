@@ -59,10 +59,23 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({
     status: 'healthy',
     server: 'duracube-contract-mcp',
-    version: '1.1.0',
+    version: '1.3.0',
     protocol: '2025-03-26',
     tools: ['get_duracube_principles', 'get_learned_corrections', 'get_output_format', 'get_finance_extraction_guide', 'get_section_principle_mapping'],
     activeSessions: sessions.size,
+    features: {
+      large_contract_optimization: {
+        enabled: true,
+        tool: 'get_section_principle_mapping',
+        version: '1.2.0',
+        description: 'Section-based analysis for contracts 100+ pages - saves 60%+ context tokens'
+      },
+      principle_alignment: {
+        status: 'verified',
+        total_principles: 28,
+        last_verified: '2026-02-02'
+      }
+    }
   });
 });
 

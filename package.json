@@ -1,6 +1,6 @@
 {
   "name": "duracube-contract-mcp",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "MCP server providing DuraCube's 28 commercial principles for contract review",
   "type": "module",
   "main": "build/index.js",

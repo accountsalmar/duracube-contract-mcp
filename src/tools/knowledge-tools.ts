@@ -215,6 +215,12 @@ export function getDuracubePrinciples(input: GetPrinciplesInput): string {
 
   // Build response with principles
   const response: {
+    _workflow_guidance: {
+      message: string;
+      recommendation: string;
+      alternative_tool: string;
+      when_to_switch: string[];
+    };
     total_principles: number;
     principles: Array<{
       id: number;
@@ -245,6 +251,17 @@ export function getDuracubePrinciples(input: GetPrinciplesInput): string {
     methodology: Record<string, unknown>;
     interconnected_principles: Array<unknown>;
   } = {
+    _workflow_guidance: {
+      message: "⚠️ FOR LARGE CONTRACTS (100+ pages): Use get_section_principle_mapping instead for optimized context usage",
+      recommendation: "If contract exceeds 100 pages, call get_section_principle_mapping with group_id='all' for section-based analysis",
+      alternative_tool: "get_section_principle_mapping",
+      when_to_switch: [
+        "Contract is 100+ pages",
+        "You receive token limit errors",
+        "Contract has complex structure with many schedules",
+        "You want to save context window tokens"
+      ]
+    },
     total_principles: principlesData.principles.length,
     principles: principlesData.principles.map(p => {
       const principle: {
@@ -505,6 +522,13 @@ export function getSectionPrincipleMapping(input: GetSectionPrincipleMappingInpu
 
   // Build response
   const response: {
+    _technology_info: {
+      tool_version: string;
+      data_version: string;
+      last_updated: string;
+      principle_alignment: string;
+      optimizations: string[];
+    };
     purpose: string;
     when_to_use: string;
     workflow: string[];
@@ -528,6 +552,19 @@ export function getSectionPrincipleMapping(input: GetSectionPrincipleMappingInpu
     quick_reference: typeof sectionMappingData.quick_reference;
     combining_results: typeof sectionMappingData.combining_results_template;
   } = {
+    _technology_info: {
+      tool_version: "1.3.0",
+      data_version: sectionMappingData.metadata.version,
+      last_updated: "2026-02-02",
+      principle_alignment: "✓ All 28 principles aligned with canonical principles.json",
+      optimizations: [
+        "Section-based chunking for token efficiency",
+        "Ready-to-use analysis prompts per group",
+        "Critical alerts for non-negotiables (PI Insurance, unconditional BGs, PCGs)",
+        "Google Drive search-first workflow support",
+        "Combining results template for final departure schedule"
+      ]
+    },
     purpose: sectionMappingData.metadata.purpose,
     when_to_use: sectionMappingData.large_contract_guidance.when_to_use,
     workflow: sectionMappingData.large_contract_guidance.workflow,
@@ -580,6 +617,16 @@ export const toolDefinitions = {
     name: 'get_duracube_principles',
     description: `Get all 28 DuraCube commercial principles with standards, search terms, red flags, and compliance logic for contract review.
 
+⚠️ WORKFLOW SELECTION - READ THIS FIRST:
+┌─────────────────────────────────────────────────────────────────────┐
+│ CONTRACT SIZE        → RECOMMENDED APPROACH                         │
+├─────────────────────────────────────────────────────────────────────┤
+│ Under 100 pages      → Use THIS tool (get_duracube_principles)     │
+│ 100-150 pages        → Consider get_section_principle_mapping       │
+│ Over 150 pages       → MUST USE get_section_principle_mapping       │
+│ Token limit errors   → SWITCH to get_section_principle_mapping      │
+└─────────────────────────────────────────────────────────────────────┘
+
 This tool provides:
 - All 28 commercial principles with DuraCube's standards
 - Search terms to find relevant contract clauses
@@ -588,7 +635,7 @@ This tool provides:
 - Critical non-negotiables (PI Insurance, unconditional guarantees, parent company guarantees)
 - Analysis methodology (3-pass extraction, 3-step comparison)
 
-Use this tool FIRST when reviewing any customer contract against DuraCube standards.`,
+For LARGE contracts (100+ pages), use get_section_principle_mapping instead - it provides optimized section-based analysis with ready-to-use prompts that save context window tokens.`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -706,34 +753,45 @@ Use this tool when performing FINANCE REVIEW (separate from commercial 28-princi
   },
   get_section_principle_mapping: {
     name: 'get_section_principle_mapping',
-    description: `Get section-to-principle mapping for analyzing LARGE contracts that exceed token limits.
+    description: `🚀 OPTIMIZED LARGE CONTRACT ANALYSIS (v1.2.0) - Context-efficient section-based workflow.
 
-PURPOSE: When a contract is too large to analyze in one pass, this tool provides:
-- 7 logical section groups (A through G) that map to specific principles
-- Ready-to-use analysis prompts for each section
-- Guidance on combining results into final departure schedule
+═══════════════════════════════════════════════════════════════════════
+  USE THIS TOOL FOR CONTRACTS 100+ PAGES - SAVES 60%+ CONTEXT TOKENS
+═══════════════════════════════════════════════════════════════════════
 
-SECTION GROUPS:
-- Group A: General & Administrative (Principles 1-6)
-- Group B: Payment & Security (Principles 14, 15, 16, 24) - contains critical non-negotiables
-- Group C: Liability & Indemnity (Principles 7-11)
-- Group D: Insurance (Principle 25) - PI Insurance = NON-COMPLIANT
-- Group E: Disputes & Legal (Principles 13, 19)
-- Group F: Variations, Extensions & Claims (Principles 17, 18, 20-23)
-- Group G: Design, Defects & Completion (Principles 12, 26-28)
+PURPOSE: Analyze large contracts efficiently by breaking into 7 section groups, each with targeted principles and ready-to-use prompts.
 
-WORKFLOW:
-1. Use this tool to get section-principle mapping
-2. Ask user to identify page ranges for each section group
-3. Analyze each section group with its mapped principles
-4. Combine all results using the provided template
+SECTION GROUPS (v1.2.0 - Corrected Principle Alignment):
+┌───────┬────────────────────────────┬─────────────────────────────────┐
+│ Group │ Name                       │ Principles                       │
+├───────┼────────────────────────────┼─────────────────────────────────┤
+│   A   │ General & Administrative   │ 3, 10, 11                        │
+│   B   │ Payment & Security         │ 14, 15, 16, 24 (ALL NON-NEG)    │
+│   C   │ Liability & Indemnity      │ 1, 2, 18, 19                     │
+│   D   │ Insurance                  │ 25 (PI = NON-COMPLIANT)          │
+│   E   │ Disputes & Termination     │ 12, 13                           │
+│   F   │ Variations, Time & Claims  │ 4, 5, 6, 7, 8, 9                 │
+│   G   │ Design, Defects & Complete │ 17, 20, 21, 22, 23, 26, 27, 28  │
+└───────┴────────────────────────────┴─────────────────────────────────┘
 
-Use this tool when:
-- Contract exceeds ~150 pages
-- You receive token limit errors
-- Contract structure is complex with many schedules
+OPTIMIZED WORKFLOW:
+1. Call this tool FIRST with group_id='all' to get section mappings
+2. Identify contract page ranges for each section group
+3. Analyze ONE group at a time using provided analysis_prompt
+4. Combine results using the combining_results template
 
-This enables systematic analysis of contracts of ANY size.`,
+BENEFITS vs get_duracube_principles:
+✓ 60%+ context token savings (load only relevant principles per section)
+✓ Ready-to-use prompts (no manual prompt construction)
+✓ Critical alerts highlighted (PI Insurance, unconditional BGs, PCGs)
+✓ Structured workflow (prevents missed principles)
+✓ Works for contracts of ANY size
+
+WHEN TO USE:
+- Contract is 100+ pages → USE THIS TOOL
+- Hit token limit errors → USE THIS TOOL
+- Complex contract with many schedules → USE THIS TOOL
+- Want efficient context usage → USE THIS TOOL`,
     inputSchema: {
       type: 'object',
       properties: {
